@@ -1,0 +1,40 @@
+import hashlib
+import os
+
+# Function to generate hash of a file
+def generate_file_hash(file_path):
+    sha256_hash = hashlib.sha256()
+    with open(file_path, "rb") as f:
+        while chunk := f.read(4096):
+            sha256_hash.update(chunk)
+    return sha256_hash.hexdigest()
+
+# Function to store initial hashes
+def create_initial_hashes(directory):
+    hash_store = {}
+    for file_name in os.listdir(directory):
+        file_path = os.path.join(directory, file_name)
+        if os.path.isfile(file_path):
+            hash_store[file_name] = generate_file_hash(file_path)
+    return hash_store
+
+# Function to monitor file changes
+def monitor_file_changes(directory, stored_hashes):
+    for file_name in os.listdir(directory):
+        file_path = os.path.join(directory, file_name)
+        if os.path.isfile(file_path):
+            current_hash = generate_file_hash(file_path)
+            if file_name in stored_hashes and stored_hashes[file_name] != current_hash:
+                print(f"ALERT: {file_name} has been modified!")
+            elif file_name not in stored_hashes:
+                print(f"NEW FILE DETECTED: {file_name}")
+            else:
+                print(f"UNCHANGED: {file_name}")
+
+# Example Usage
+directory = "your_directory_path"  # Replace with target directory path
+stored_hashes = create_initial_hashes(directory)  # Initial scan
+print("Initial Hashes Stored.")
+
+# Later, re-run to check for modifications
+monitor_file_changes(directory, stored_hashes)
