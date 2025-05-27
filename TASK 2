@@ -1,0 +1,53 @@
+import requests
+from bs4 import BeautifulSoup
+
+# Define the target URL
+target_url = "https://example.com"
+
+# Common SQL Injection payloads
+sql_payloads = ["'", "\"", " OR 1=1", "' UNION SELECT NULL--"]
+
+# Common XSS payload
+xss_payload = "<script>alert('XSS')</script>"
+
+def check_sql_injection(url):
+    """Tests for potential SQL Injection vulnerabilities."""
+    for payload in sql_payloads:
+        response = requests.get(url, params={"id": payload})
+        if "SQL syntax" in response.text or "mysql_fetch_array" in response.text:
+            print(f"[!] Possible SQL Injection detected with payload: {payload}")
+
+def check_xss(url):
+    """Tests for XSS vulnerabilities."""
+    response = requests.get(url, params={"query": xss_payload})
+    if xss_payload in response.text:
+        print("[!] Potential XSS vulnerability detected!")
+
+def check_security_headers(url):
+    """Checks security headers for best practices."""
+    response = requests.get(url)
+    headers = response.headers
+    security_headers = ["X-XSS-Protection", "Content-Security-Policy", "Strict-Transport-Security"]
+    
+    for header in security_headers:
+        if header not in headers:
+            print(f"[!] Missing security header: {header}")
+
+def scan_links(url):
+    """Extracts and scans links within the webpage."""
+    response = requests.get(url)
+    soup = BeautifulSoup(response.text, "html.parser")
+    links = [a.get("href") for a in soup.find_all("a", href=True)]
+    
+    print("\n[+] Links Found in the Page:")
+    for link in links:
+        print(link)
+
+# Running the scanner
+print("\nStarting Web Vulnerability Scan...\n")
+check_sql_injection(target_url)
+check_xss(target_url)
+check_security_headers(target_url)
+scan_links(target_url)
+
+
